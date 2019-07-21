@@ -1,5 +1,6 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.work.TaskFactory;
 import org.cytoscape.work.TaskIterator;
@@ -11,11 +12,14 @@ import org.cytoscape.work.TaskIterator;
 public class DecomposeTaskFactory implements TaskFactory {
 
 	private final CyNetwork network;
+	private final Parameters parameters;
 
 	public DecomposeTaskFactory(
-			CyNetwork network
+			CyNetwork network,
+			Parameters parameters
 	) {
 		this.network = network;
+		this.parameters = parameters;
 	}
 
 	@Override
