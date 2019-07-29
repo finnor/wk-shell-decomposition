@@ -32,84 +32,103 @@ public class DecomposeTask implements ObservableTask {
 	 */
 	@Override
 	public void run(TaskMonitor tm) throws Exception {
-		//Iterate over the network and remove k=1; keep reiterating until no k=1
-		//Do this for all k until you reach a k where all the remaining network = k
-		/*int k=1;
-		boolean isLastShell = false;
-		boolean hasMoreNodes = true;
-		//Iterate over network until you reach a k-core where all the remaining nodes have that k
-		while(!isLastShell) {
-			isLastShell = true;
-			//clone network
 
-			//iterate over the network until you don't have to remove anymore nodes
-			while (hasMoreNodes) {
-
-			}
-
-
-			k++;
-		}*/
-		CyTable table = network.getDefaultNodeTable();
 
 		//Normalize weights; calculate mean weight and divide each weight by the mean
 		//Then divide each resulting weight from their minimum
-
-		if(table.getColumn("kShell")==null) {
-			table.createColumn("kShell", Integer.class, false);
+		CyTable edgeTable = network.getDefaultEdgeTable();
+		if(edgeTable.getColumn("_wksdc_normalizedWeight")==null) {
+			edgeTable.createColumn("_wksdc_normalizedWeight", Integer.class, false);
 		}
-		if(table.getColumn("isPruned")==null) {
-			table.createColumn("isPruned", Boolean.class, false);
+
+		String weightAttributeName = params.getWeightColumn();
+		CyColumn weightColumn = (weightAttributeName!=null) ? edgeTable.getColumn(weightAttributeName) : null;
+
+		//Weight Normalization, do i need to do this for each partition
+		double sumWeights = 0;
+		Object weight = null;
+		double minWeight = Double.MAX_VALUE;
+		if(weightColumn!=null) {
+
+			//Calculate mean weight
+			for (CyRow row : edgeTable.getAllRows()) {
+				weight = row.get(weightColumn.getName(), weightColumn.getType());
+				if (weight instanceof Double) {
+					sumWeights += (double) weight;
+					if((double) weight < minWeight)
+						minWeight = (double) weight;
+				} else if (weight instanceof Integer) {
+					sumWeights += (int) weight;
+					if((int) weight < minWeight)
+						minWeight = (int) weight;
+				} else if (weight instanceof Long) {
+					sumWeights += (long) weight;
+					if((long) weight < minWeight)
+						minWeight = (long) weight;
+				}
+			}
+			double meanWeight = sumWeights/edgeTable.getRowCount();
+			double normalizedMin = minWeight/meanWeight;
+			double currentWeight = 0;
+
+			//Divide by min to have unit weights
+			for (CyRow row : edgeTable.getAllRows()) {
+				weight = row.get(weightColumn.getName(), weightColumn.getType());
+				if (weight instanceof Double) {
+					currentWeight = (double) weight;
+				} else if (weight instanceof Integer) {
+					currentWeight = (int) weight;
+				} else if (weight instanceof Long) {
+					currentWeight = (long) weight;
+				}
+				row.set("_wksdc_normalizedWeight", (int) Math.round((currentWeight/meanWeight)/normalizedMin));
+			}
+		}
+
+
+		CyTable table = network.getDefaultNodeTable();
+		if(table.getColumn("_wksdc_kShell")==null) {
+			table.createColumn("_wksdc_kShell", Integer.class, false);
+		}
+		if(table.getColumn("_wksdc_isPruned")==null) {
+			table.createColumn("_wksdc_isPruned", Boolean.class, false);
 		}
 		for(CyRow row : table.getAllRows()) {
-			row.set("kShell", 0);
-			row.set("isPruned", false);
+			row.set("_wksdc_kShell", 0);
+			row.set("_wksdc_isPruned", false);
 		}
+		String primaryNodeKey = table.getPrimaryKey().getName();
 		int kShell = 0;
 		int k = 0;
 		int degree = 0;
-		double sumWeights = 0;
 		double alpha = params.getDegreeExponent();
 		double beta = params.getWeightExponent();
-		String primaryNodeKey = table.getPrimaryKey().getName();
-		String weightAttributeName = params.getWeightColumn();
-		CyColumn weightColumn = (weightAttributeName!=null) ? network.getDefaultEdgeTable().getColumn(weightAttributeName) : null;
 		CyNode node = null;
-		CyRow lastRow = null;
 		Collection<CyRow> remainingRows = null;
 		boolean done = false;
 		boolean nodeWasPruned = true;
-		int i = 0;
 		//Keep iterating until all rows are assigned to a shell
 		while(!done) {
-			i++;
 			done = true;
 			//Have to keep iterating on a shell until no more nodes are pruned at this level
 			nodeWasPruned = true;
 			while(nodeWasPruned) {
 				nodeWasPruned = false;
-				remainingRows = table.getMatchingRows("isPruned", false);
-				//done = remainingRows.isEmpty();
+				remainingRows = table.getMatchingRows("_wksdc_isPruned", false);
 				//For each remaining node, see if it belongs to this k-shell
 				for (CyRow row : remainingRows) {
 					node = network.getNode(row.get(primaryNodeKey, Long.class));
 					//calculate k
-					//Get list of edges
-					//Calculate based on those not pruned yet
-					//for iterating rows, use that matching thing and only pull not soft deleted ones
 					degree = 0;
 					sumWeights = 0;
+					//Iterate list of edges
 					for(CyEdge edge : network.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
-						if(!network.getRow(edge.getSource()).get("isPruned", Boolean.class) && !network.getRow(edge.getTarget()).get("isPruned", Boolean.class)) {
+						//Calculate based on those not pruned yet
+						if(!network.getRow(edge.getSource()).get("_wksdc_isPruned", Boolean.class) && !network.getRow(edge.getTarget()).get("_wksdc_isPruned", Boolean.class)) {
 							degree++;
 							if(weightColumn!=null) {
-								Object x = network.getRow(edge).get(weightColumn.getName(), weightColumn.getType());
-								if (x instanceof Double)
-									sumWeights += (double) x;
-								else if (x instanceof Integer)
-									sumWeights += (int) x;
-								else if (x instanceof Long)
-									sumWeights += (long) x;
+								weight = network.getRow(edge).get("_wksdc_normalizedWeight", Integer.class);
+								sumWeights += (int) weight;
 							} else {
 								sumWeights++;
 							}
@@ -122,10 +141,8 @@ public class DecomposeTask implements ObservableTask {
 
 					//if weighted degree is less than or equal to this k-shell, assign to this k-shell and prune
 					if(kShell>=k) {
-						row.set("kShell", kShell);
-						//delete node
-						// or maybe collect all nodes to delete and delete them at end
-						row.set("isPruned", true);
+						row.set("_wksdc_kShell", kShell);
+						row.set("_wksdc_isPruned", true);
 						nodeWasPruned = true;
 					} else {
 						done = false;
@@ -134,12 +151,8 @@ public class DecomposeTask implements ObservableTask {
 			}
 			kShell++; //?
 		}
-		table.deleteColumn("isPruned");
-
-		//TODO normalize weights
-		//Use parameters for alpha and beta
-		//Get weight column
-		//show results
+		table.deleteColumn("_wksdc_isPruned");
+		edgeTable.deleteColumn("_wksdc_normalizedWeight");
 	}
 
 	@Override
