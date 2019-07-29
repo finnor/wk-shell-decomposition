@@ -46,12 +46,9 @@ public class ParameterManager {
 		//until this method is called
 		Parameters currentParamSet = new Parameters(
 				network,
-				newParams.getSelectedNodes(),
+				newParams.getWeightColumn(),
 				newParams.getDegreeExponent(),
-				newParams.getWeightExponent(),
-				newParams.getCoreThreshold(),
-				newParams.getDegreeThreshold(),
-				newParams.getWeightThreshold());
+				newParams.getWeightExponent());
 
 		currentParams.put(network.getSUID(), currentParamSet);
 	}

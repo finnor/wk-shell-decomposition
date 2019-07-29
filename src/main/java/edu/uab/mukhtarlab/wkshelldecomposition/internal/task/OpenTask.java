@@ -40,7 +40,7 @@ public class OpenTask implements Task {
 
 			// First we must make sure that the app is not already open
 			if (getMainPanel() == null) {
-				mainPanel = new MainPanel(swingApplication, decomposeAction);
+				mainPanel = new MainPanel(swingApplication, registrar, decomposeAction);
 
 				registrar.registerService(mainPanel, CytoPanelComponent.class, new Properties());
 				decomposeAction.updateEnableState();

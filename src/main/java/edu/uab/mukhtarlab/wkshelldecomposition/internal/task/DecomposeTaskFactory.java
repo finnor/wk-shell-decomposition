@@ -24,7 +24,7 @@ public class DecomposeTaskFactory implements TaskFactory {
 
 	@Override
 	public TaskIterator createTaskIterator() {
-		return new TaskIterator(new DecomposeTask(network));
+		return new TaskIterator(new DecomposeTask(network, parameters));
 	}
 
 	@Override

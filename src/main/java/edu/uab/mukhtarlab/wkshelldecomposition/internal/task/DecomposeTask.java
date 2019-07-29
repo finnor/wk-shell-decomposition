@@ -1,5 +1,6 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 import org.cytoscape.model.*;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
@@ -15,12 +16,15 @@ public class DecomposeTask implements ObservableTask {
 
 	private boolean cancelled;
 	private CyNetwork network;
+	private Parameters params;
 
 
 	public DecomposeTask(
-			CyNetwork network
+			CyNetwork network,
+			Parameters params
 	) {
 		this.network = network;
+		this.params = params;
 	}
 
 	/**
@@ -64,9 +68,12 @@ public class DecomposeTask implements ObservableTask {
 		int kShell = 0;
 		int k = 0;
 		int degree = 0;
-		int sumWeights = 0;
+		double sumWeights = 0;
+		double alpha = params.getDegreeExponent();
+		double beta = params.getWeightExponent();
 		String primaryNodeKey = table.getPrimaryKey().getName();
-		String weightAttribute = "test";
+		String weightAttributeName = params.getWeightColumn();
+		CyColumn weightColumn = (weightAttributeName!=null) ? network.getDefaultEdgeTable().getColumn(weightAttributeName) : null;
 		CyNode node = null;
 		CyRow lastRow = null;
 		Collection<CyRow> remainingRows = null;
@@ -95,11 +102,23 @@ public class DecomposeTask implements ObservableTask {
 					for(CyEdge edge : network.getAdjacentEdgeIterable(node, CyEdge.Type.ANY)) {
 						if(!network.getRow(edge.getSource()).get("isPruned", Boolean.class) && !network.getRow(edge.getTarget()).get("isPruned", Boolean.class)) {
 							degree++;
-							sumWeights = 1;// += network.getRow(edge).get(weightAttribute, Double.class);
+							if(weightColumn!=null) {
+								Object x = network.getRow(edge).get(weightColumn.getName(), weightColumn.getType());
+								if (x instanceof Double)
+									sumWeights += (double) x;
+								else if (x instanceof Integer)
+									sumWeights += (int) x;
+								else if (x instanceof Long)
+									sumWeights += (long) x;
+							} else {
+								sumWeights++;
+							}
 						}
 
 					}
-					k = degree;//(int) Math.round(Math.sqrt(degree * sumWeights));
+
+					k = (int) Math.round(Math.pow(Math.pow(degree, alpha) * Math.pow(sumWeights, beta), 1/(alpha+beta)));
+
 
 					//if weighted degree is less than or equal to this k-shell, assign to this k-shell and prune
 					if(kShell>=k) {

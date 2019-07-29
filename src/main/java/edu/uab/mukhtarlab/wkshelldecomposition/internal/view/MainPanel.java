@@ -7,23 +7,21 @@ import static org.cytoscape.util.swing.LookAndFeelUtil.isAquaLAF;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import javax.swing.GroupLayout;
+import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.action.DecomposeAction;
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
@@ -32,6 +30,8 @@ import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.ParameterManager;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.util.AppResources;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.util.AppResources.ImageName;
+import org.cytoscape.model.CyColumn;
+import org.cytoscape.service.util.CyServiceRegistrar;
 
 /**
  * The main panel where a user inputs parameters and starts decomposition
@@ -39,19 +39,19 @@ import edu.uab.mukhtarlab.wkshelldecomposition.internal.util.AppResources.ImageN
 public class MainPanel extends JPanel implements CytoPanelComponent {
 	
 	private final CySwingApplication swingApplication;
+	private final CyServiceRegistrar registrar;
 
 	private JPanel parametersPanel;
+	private JComboBox  weightColumn;
 	private JFormattedTextField degreeExponentTxt;
 	private JFormattedTextField weightExponentTxt;
-	private JFormattedTextField coreThresholdTxt;
-	private JFormattedTextField degreeThresholdTxt;
-	private JFormattedTextField weightThresholdTxt;
 
 	private Parameters currentParamsCopy; // stores current parameters - populates panel fields
 	private DecimalFormat decFormat; // used in the formatted text fields
 
-	public MainPanel(CySwingApplication swingApplication, DecomposeAction decomposeAction) {
+	public MainPanel(CySwingApplication swingApplication, CyServiceRegistrar registrar, DecomposeAction decomposeAction) {
 		this.swingApplication = swingApplication;
+		this.registrar = registrar;
 		
 		if (isAquaLAF())
 			setOpaque(false);
@@ -130,17 +130,20 @@ public class MainPanel extends JPanel implements CytoPanelComponent {
 			weightExponentLabel.setMinimumSize(getWeightExponentTxt().getMinimumSize());
 			weightExponentLabel.setToolTipText(getWeightExponentTxt().getToolTipText());
 
-			final JLabel coreThresholdLabel = new JLabel("K-Core Threshold:");
-			coreThresholdLabel.setMinimumSize(getCoreThresholdTxt().getMinimumSize());
-			coreThresholdLabel.setToolTipText(getCoreThresholdTxt().getToolTipText());
+			final JLabel weightColumnLabel = new JLabel("Weight Column:");
+			Collection<CyColumn> columns = registrar.getService(CyApplicationManager.class).getCurrentNetwork().getDefaultEdgeTable().getColumns();
+			ArrayList<String> colList = new ArrayList<>();
+			colList.add(null);
+			for(CyColumn column : columns) {
+				if(column.getType()==Integer.class) {
+					colList.add(column.getName());
+				}
+			}
 
-			final JLabel degreeThresholdLabel = new JLabel("Degree Threshold:");
-			degreeThresholdLabel.setMinimumSize(getDegreeThresholdTxt().getMinimumSize());
-			degreeThresholdLabel.setToolTipText(getDegreeThresholdTxt().getToolTipText());
+			// create dropdown
+			weightColumn = new JComboBox(colList.toArray());
+			weightColumn.addItemListener(new ComboBoxAction());
 
-			final JLabel weightThresholdLabel = new JLabel("Weight Threshold:");
-			weightThresholdLabel.setMinimumSize(getWeightThresholdTxt().getMinimumSize());
-			weightThresholdLabel.setToolTipText(getWeightThresholdTxt().getToolTipText());
 
 			final GroupLayout layout = new GroupLayout(parametersPanel);
 			parametersPanel.setLayout(layout);
@@ -149,32 +152,24 @@ public class MainPanel extends JPanel implements CytoPanelComponent {
 
 			layout.setHorizontalGroup(layout.createSequentialGroup()
 					.addGroup(layout.createParallelGroup(Alignment.TRAILING, true)
+							.addComponent(weightColumnLabel)
 							.addComponent(degreeExponentLabel)
 							.addComponent(weightExponentLabel)
-							.addComponent(coreThresholdLabel)
-							.addComponent(degreeThresholdLabel)
-							.addComponent(weightThresholdLabel)
 					).addGroup(layout.createParallelGroup(Alignment.LEADING, true)
+							.addComponent(weightColumn, PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
 							.addComponent(getDegreeExponentTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
 							.addComponent(getWeightExponentTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getCoreThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getDegreeThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getWeightThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
 					)
 			);
 			layout.setVerticalGroup(layout.createParallelGroup(Alignment.TRAILING, false)
 					.addGroup(layout.createSequentialGroup()
+							.addComponent(weightColumnLabel)
 							.addComponent(degreeExponentLabel)
 							.addComponent(weightExponentLabel)
-							.addComponent(coreThresholdLabel)
-							.addComponent(degreeThresholdLabel)
-							.addComponent(weightThresholdLabel)
 					).addGroup(layout.createSequentialGroup()
-							.addComponent(getDegreeExponentTxt())
+							.addComponent(weightColumn)
+							.addComponent(getDegreeExponentTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
 							.addComponent(getWeightExponentTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getCoreThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getDegreeThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-							.addComponent(getWeightThresholdTxt(), PREFERRED_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
 					)
 			);
 		}
@@ -210,49 +205,17 @@ public class MainPanel extends JPanel implements CytoPanelComponent {
 		return weightExponentTxt;
 	}
 
-	private JFormattedTextField getCoreThresholdTxt() {
-		if (coreThresholdTxt == null) {
-			coreThresholdTxt = new JFormattedTextField(decFormat);
-			coreThresholdTxt.setColumns(3);
-			coreThresholdTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-			coreThresholdTxt.addPropertyChangeListener("value", new FormattedTextFieldAction());
-			coreThresholdTxt.setToolTipText(
-					"<html>Sets the k-core to threshold out of results.</html>");
-			coreThresholdTxt.setText(String.valueOf(currentParamsCopy.getCoreThreshold()));
-		}
+	private class ComboBoxAction extends JFrame implements ItemListener {
+		public void itemStateChanged(ItemEvent e)
+		{
+			if (e.getSource() == weightColumn) {
 
-		return coreThresholdTxt;
+				currentParamsCopy.setWeightColumn((String) weightColumn.getSelectedItem());
+			}
+		}
 	}
 
-	private JFormattedTextField getDegreeThresholdTxt() {
-		if (degreeThresholdTxt == null) {
-			degreeThresholdTxt = new JFormattedTextField(decFormat);
-			degreeThresholdTxt.setColumns(3);
-			degreeThresholdTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-			degreeThresholdTxt.addPropertyChangeListener("value", new FormattedTextFieldAction());
-			degreeThresholdTxt.setToolTipText(
-					"<html>Sets the degree by which to threshold out nodes.</html>");
-			degreeThresholdTxt.setText(String.valueOf(currentParamsCopy.getDegreeThreshold()));
-		}
-
-		return degreeThresholdTxt;
-	}
-
-	private JFormattedTextField getWeightThresholdTxt() {
-		if (weightThresholdTxt == null) {
-			weightThresholdTxt = new JFormattedTextField(decFormat);
-			weightThresholdTxt.setColumns(3);
-			weightThresholdTxt.setHorizontalAlignment(SwingConstants.RIGHT);
-			weightThresholdTxt.addPropertyChangeListener("value", new FormattedTextFieldAction());
-			weightThresholdTxt.setToolTipText(
-					"<html>Sets the weight by which to threshold out nodes.</html>");
-			weightThresholdTxt.setText(String.valueOf(currentParamsCopy.getWeightThreshold()));
-		}
-
-		return weightThresholdTxt;
-	}
-
-	/**
+		/**
 	 * Validation
 	 */
 	private class FormattedTextFieldAction implements PropertyChangeListener {
@@ -266,8 +229,8 @@ public class MainPanel extends JPanel implements CytoPanelComponent {
 			if (source == degreeExponentTxt) {
 				Number value = (Number) degreeExponentTxt.getValue();
 				
-				if ((value != null) && (value.intValue() > 0)) {
-					currentParamsCopy.setDegreeExponent(value.intValue());
+				if ((value != null) && (value.doubleValue() > 0)) {
+					currentParamsCopy.setDegreeExponent(value.doubleValue());
 				} else {
 					source.setValue(1);
 					message += "The degree exponent must be greater than 0.";
@@ -276,41 +239,11 @@ public class MainPanel extends JPanel implements CytoPanelComponent {
 			} else if (source == weightExponentTxt) {
 				Number value = (Number) weightExponentTxt.getValue();
 
-				if ((value != null) && (value.intValue() > 0)) {
-					currentParamsCopy.setWeightExponent(value.intValue());
+				if ((value != null) && (value.doubleValue() > 0)) {
+					currentParamsCopy.setWeightExponent(value.doubleValue());
 				} else {
 					source.setValue(1);
 					message += "The weight exponent must be greater than 0.";
-					invalid = true;
-				}
-			} else if (source == coreThresholdTxt) {
-				Number value = (Number) coreThresholdTxt.getValue();
-
-				if ((value != null) && (value.intValue() >= 0)) {
-					currentParamsCopy.setCoreThreshold(value.intValue());
-				} else {
-					source.setValue(0);
-					message += "The core threshold must be greater than or equal to 0.";
-					invalid = true;
-				}
-			} else if (source == degreeThresholdTxt) {
-				Number value = (Number) degreeThresholdTxt.getValue();
-
-				if ((value != null) && (value.intValue() >= 0)) {
-					currentParamsCopy.setDegreeThreshold(value.intValue());
-				} else {
-					source.setValue(0);
-					message += "The degree threshold must be greater than or equal to 0.";
-					invalid = true;
-				}
-			} else if (source == weightThresholdTxt) {
-				Number value = (Number) weightThresholdTxt.getValue();
-
-				if ((value != null) && (value.intValue() >= 0)) {
-					currentParamsCopy.setWeightThreshold(value.intValue());
-				} else {
-					source.setValue(0);
-					message += "The weight threshold must be greater than or equal to 0.";
 					invalid = true;
 				}
 			}

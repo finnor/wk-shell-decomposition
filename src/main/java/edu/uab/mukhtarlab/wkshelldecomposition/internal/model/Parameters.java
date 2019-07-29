@@ -9,18 +9,12 @@ import org.cytoscape.work.Tunable;
  */
 public class Parameters {
 
-	// scope
 	private CyNetwork network;
 
-	// used in scoring stage
-	private int degreeExponent;
-	private int weightExponent;
-	private int coreThreshold;
-	private int degreeThreshold;
-	private int weightThreshold;
+	private String weightColumn;
+	private double degreeExponent;
+	private double weightExponent;
 
-	/** Caches the SUID of selected nodes. */
-	private Long[] selectedNodes;
 
 	/**
 	 * Constructor for the parameter set object. Default parameters are:
@@ -28,9 +22,6 @@ public class Parameters {
 	 * selectedNodes = new Integer[0],
 	 * degree exponent = 1
 	 * weight exponent = 1
-	 * k-core threshold = 0
-	 * degree threshold = 0
-	 * weight threshold = 0
 	 */
 	public Parameters() {
 		setDefaultParams();
@@ -42,60 +33,44 @@ public class Parameters {
 	 * for exploration and export purposes.
 	 *
 	 * @param network {@link CyNetwork} to be analyzed
-	 * @param selectedNodes Node selection for selection-based scope
+	 * @param weightColumn Which column is the weight
 	 * @param degreeExponent degree exponent
 	 * @param weightExponent weight exponent
-	 * @param coreThreshold core threshold
-	 * @param degreeThreshold degree threshold
-	 * @param weightThreshold weight threshold
 	 */
 	public Parameters(
 			CyNetwork network,
-			Long[] selectedNodes,
-			int degreeExponent,
-			int weightExponent,
-			int coreThreshold,
-			int degreeThreshold,
-			int weightThreshold
+			String weightColumn,
+			double degreeExponent,
+			double weightExponent
 	) {
-		setAllAlgorithmParams(network, selectedNodes, degreeExponent,
-				weightExponent, coreThreshold, degreeThreshold, weightThreshold);
+		setAllAlgorithmParams(network, weightColumn, degreeExponent, weightExponent);
 	}
 
 	/**
 	 * Method for setting all parameters to their default values
 	 */
 	public void setDefaultParams() {
-		setAllAlgorithmParams(null, new Long[0], 1, 1, 0, 0, 0);
+		setAllAlgorithmParams(null, null, 1, 1);
 	}
 
 	/**
 	 * Convenience method to set all the main algorithm parameters
 	 *
 	 * @param network {@link CyNetwork} to be analyzed
-	 * @param selectedNodes Node selection for selection-based scopes
+	 * @param weightColumn Which column is the weight
 	 * @param degreeExponent degree exponent
 	 * @param weightExponent weight exponent
-	 * @param coreThreshold core threshold
-	 * @param degreeThreshold degree threshold
-	 * @param weightThreshold weight threshold
 	 */
 	public void setAllAlgorithmParams(
 			CyNetwork network,
-			Long[] selectedNodes,
-			int degreeExponent,
-			int weightExponent,
-			int coreThreshold,
-			int degreeThreshold,
-			int weightThreshold
+			String weightColumn,
+			double degreeExponent,
+			double weightExponent
 	) {
 		this.network = network;
-		this.selectedNodes = selectedNodes;
+		this.weightColumn = weightColumn;
 		this.degreeExponent = degreeExponent;
 		this.weightExponent = weightExponent;
-		this.coreThreshold = coreThreshold;
-		this.degreeThreshold = degreeThreshold;
-		this.weightThreshold = weightThreshold;
 	}
 
 	/**
@@ -106,12 +81,9 @@ public class Parameters {
 	public Parameters copy() {
 		Parameters newParam = new Parameters();
 		newParam.setNetwork(network);
-		newParam.setSelectedNodes(selectedNodes);
+		newParam.setWeightColumn(weightColumn);
 		newParam.setDegreeExponent(degreeExponent);
 		newParam.setWeightExponent(weightExponent);
-		newParam.setCoreThreshold(coreThreshold);
-		newParam.setDegreeThreshold(degreeThreshold);
-		newParam.setWeightThreshold(weightThreshold);
 		
 		return newParam;
 	}
@@ -136,11 +108,11 @@ public class Parameters {
 			exampleStringValue = "1",
 			context = "nogui"
 	)
-	public int getDegreeExponent() {
+	public double getDegreeExponent() {
 		return degreeExponent;
 	}
 
-	public void setDegreeExponent(int degreeExponent) {
+	public void setDegreeExponent(double degreeExponent) {
 		this.degreeExponent = degreeExponent;
 	}
 
@@ -150,62 +122,20 @@ public class Parameters {
 			exampleStringValue = "1",
 			context = "nogui"
 	)
-	public int getWeightExponent() {
-		return degreeExponent;
+	public double getWeightExponent() {
+		return weightExponent;
 	}
 
-	public void setWeightExponent(int weightExponent) {
+	public void setWeightExponent(double weightExponent) {
 		this.weightExponent = weightExponent;
 	}
 
-	@Tunable(
-			description = "K-Core Threshold",
-			longDescription = "Sets the k-core to threshold out of results.",
-			exampleStringValue = "0",
-			context = "nogui"
-	)
-	public int getCoreThreshold() {
-		return coreThreshold;
+	public String getWeightColumn() {
+		return weightColumn;
 	}
 
-	public void setCoreThreshold(int coreThreshold) {
-		this.coreThreshold = coreThreshold;
-	}
-
-	@Tunable(
-			description = "Degree Threshold",
-			longDescription = "Sets the degree by which to threshold out nodes.",
-			exampleStringValue = "0",
-			context = "nogui"
-	)
-	public int getDegreeThreshold() {
-		return degreeThreshold;
-	}
-
-	public void setDegreeThreshold(int degreeThreshold) {
-		this.degreeThreshold = degreeThreshold;
-	}
-
-	@Tunable(
-			description = "Weight Threshold",
-			longDescription = "Sets the weight by which to threshold out nodes.",
-			exampleStringValue = "0",
-			context = "nogui"
-	)
-	public int getWeightThreshold() {
-		return weightThreshold;
-	}
-
-	public void setWeightThreshold(int weightThreshold) {
-		this.weightThreshold = weightThreshold;
-	}
-
-	public Long[] getSelectedNodes() {
-		return selectedNodes;
-	}
-
-	public void setSelectedNodes(Long[] selectedNodes) {
-		this.selectedNodes = selectedNodes;
+	public void setWeightColumn(String weightColumn) {
+		this.weightColumn = weightColumn;
 	}
 
 	/**
@@ -219,8 +149,7 @@ public class Parameters {
 		String lineSep = System.getProperty("line.separator");
 		StringBuffer sb = new StringBuffer();
 		sb.append("   Parameters:" + lineSep + "      α (Degree Exponent): " + degreeExponent + "  β (Weight Exponent): " +
-				weightExponent + lineSep + "  Core Threshold: " + coreThreshold + "  Degree Threshold " +
-				degreeThreshold + "  Weight Threshold " + weightThreshold + lineSep);
+				weightExponent + lineSep + "  Weight Column: " + weightColumn + lineSep);
 		return sb.toString();
 	}
 }
