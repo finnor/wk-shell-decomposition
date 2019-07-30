@@ -50,7 +50,7 @@ public class Parameters {
 	 * Method for setting all parameters to their default values
 	 */
 	public void setDefaultParams() {
-		setAllAlgorithmParams(null, null, 1, 1);
+		setAllAlgorithmParams(null, null, 1.0, 1.0);
 	}
 
 	/**

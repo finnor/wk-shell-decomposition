@@ -1,6 +1,7 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.action;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.view.MainPanel;
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.view.ResultsPanel;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.application.swing.CySwingApplication;
@@ -52,6 +53,18 @@ public abstract class AbstractAppAction extends AbstractCyAction {
 		for (int i = 0; i < count; i++) {
 			if (cytoPanel.getComponentAt(i) instanceof MainPanel)
 				return (MainPanel) cytoPanel.getComponentAt(i);
+		}
+
+		return null;
+	}
+
+	protected ResultsPanel getResultsPanel() {
+		CytoPanel cytoPanel = getResultsCytoPanel();
+		int count = cytoPanel.getCytoPanelComponentCount();
+
+		for (int i = 0; i < count; i++) {
+			if (cytoPanel.getComponentAt(i) instanceof ResultsPanel)
+				return (ResultsPanel) cytoPanel.getComponentAt(i);
 		}
 
 		return null;
