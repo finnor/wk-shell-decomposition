@@ -65,6 +65,7 @@ public class DecomposeAction extends AbstractAppAction {
 				}
 
 				if (resultsPanel != null) {
+					resultsPanel.setResult(result);
 					CytoPanel cytoPanel = swingApplication.getCytoPanel(CytoPanelName.EAST);
 					int index = cytoPanel.indexOfComponent(resultsPanel);
 					cytoPanel.setSelectedIndex(index);

@@ -13,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
@@ -29,6 +30,8 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent {
     private JScrollPane clusterBrowserScroll;
     private BasicCollapsiblePanel explorePnl;
     private JButton closeBtn;
+
+    private Result result;
 
     private final CyServiceRegistrar registrar;
 
@@ -84,6 +87,9 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent {
         return "Test";
     }
 
+    public void setResult(Result result) {
+        this.result = result;
+    }
 
     private BasicCollapsiblePanel getExplorePnl() {
         if (explorePnl == null) {
