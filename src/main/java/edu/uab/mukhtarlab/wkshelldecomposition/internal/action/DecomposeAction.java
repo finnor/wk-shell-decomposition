@@ -10,7 +10,6 @@ import org.cytoscape.application.swing.*;
 import org.cytoscape.model.*;
 import org.cytoscape.service.util.CyServiceRegistrar;
 
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskObserver;
@@ -31,6 +30,7 @@ public class DecomposeAction extends AbstractAppAction {
 	) {
 		super(title, ActionEnableSupport.ENABLE_FOR_NETWORK, registrar);
 		this.registrar = registrar;
+		setPreferredMenu("Apps");
 
 	}
 
@@ -42,8 +42,6 @@ public class DecomposeAction extends AbstractAppAction {
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		final CyNetwork network = applicationManager.getCurrentNetwork();
-		final Parameters params =
-				getMainPanel() != null ? getMainPanel().getCurrentParamsCopy() : new Parameters();
 
 		TaskObserver taskObserver = new TaskObserver() {
 
@@ -80,11 +78,11 @@ public class DecomposeAction extends AbstractAppAction {
 			}
 		};
 
-		execute(network, params, taskObserver);
+		execute(network, taskObserver);
 	}
 
-	private void execute(CyNetwork network, Parameters currentParams, TaskObserver taskObserver) {
-		DecomposeTaskFactory tf = new DecomposeTaskFactory(network, currentParams);
+	private void execute(CyNetwork network, TaskObserver taskObserver) {
+		DecomposeTaskFactory tf = new DecomposeTaskFactory(network);
 		registrar.getService(DialogTaskManager.class).execute(tf.createTaskIterator(), taskObserver);
 	}
 }

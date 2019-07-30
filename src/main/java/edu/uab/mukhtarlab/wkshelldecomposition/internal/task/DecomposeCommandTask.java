@@ -6,7 +6,6 @@ import org.cytoscape.work.ContainsTunables;
 import org.cytoscape.work.TaskMonitor;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.action.DecomposeAction;
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 
 /**
  * Performs the weighted k-shell decomposition
@@ -15,7 +14,6 @@ import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Parameters;
 public class DecomposeCommandTask extends AbstractTask {
 
 	@ContainsTunables
-	public Parameters params = new Parameters();
 	
 	private final DecomposeAction action;
 	private final CyServiceRegistrar registrar;

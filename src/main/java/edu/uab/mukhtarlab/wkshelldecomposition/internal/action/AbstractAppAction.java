@@ -1,6 +1,5 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.action;
 
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.view.MainPanel;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.view.ResultsPanel;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.AbstractCyAction;
@@ -28,34 +27,12 @@ public abstract class AbstractAppAction extends AbstractCyAction {
 		this.netViewManager = serviceRegistrar.getService(CyNetworkViewManager.class);
 		this.serviceRegistrar = serviceRegistrar;
 	}
-	
-	/**
-	 * @return Cytoscape's control panel
-	 */
-	protected CytoPanel getControlCytoPanel() {
-		return swingApplication.getCytoPanel(CytoPanelName.WEST);
-	}
 
 	/**
 	 * @return Cytoscape's results panel
 	 */
 	protected CytoPanel getResultsCytoPanel() {
 		return swingApplication.getCytoPanel(CytoPanelName.EAST);
-	}
-
-	/**
-	 * @return The main panel of the app if it is opened, and null otherwise
-	 */
-	protected MainPanel getMainPanel() {
-		CytoPanel cytoPanel = getControlCytoPanel();
-		int count = cytoPanel.getCytoPanelComponentCount();
-
-		for (int i = 0; i < count; i++) {
-			if (cytoPanel.getComponentAt(i) instanceof MainPanel)
-				return (MainPanel) cytoPanel.getComponentAt(i);
-		}
-
-		return null;
 	}
 
 	protected ResultsPanel getResultsPanel() {
@@ -68,12 +45,5 @@ public abstract class AbstractAppAction extends AbstractCyAction {
 		}
 
 		return null;
-	}
-
-	/**
-	 * @return true if the app is opened and false otherwise
-	 */
-	protected boolean isOpened() {
-		return getMainPanel() != null;
 	}
 }
