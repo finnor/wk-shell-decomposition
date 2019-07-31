@@ -1,5 +1,6 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
+import com.google.gson.Gson;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
@@ -32,7 +33,7 @@ public class DecomposeTask implements ObservableTask {
 	}
 
 	/**
-	 * Run App (Both score and find steps).
+	 * Runs the decomposition
 	 */
 	@Override
 	public void run(TaskMonitor tm) throws Exception {
@@ -78,29 +79,42 @@ public class DecomposeTask implements ObservableTask {
 		if(nodeTable.getColumn("_wkshell")==null) {
 			nodeTable.createColumn("_wkshell", Integer.class, false);
 		}
+		if(nodeTable.getColumn("_wks_percentile_bucket")==null) {
+			nodeTable.createColumn("_wks_percentile_bucket", Integer.class, false);
+		}
 		CyRow nodeRow;
 		CyNode node;
 		i=1;
 		Shell resultShell;
-		Result result = new Result();
 		for(String shell : shells) {
 			resultShell = new Shell(i);
 			for (String nodeIndex : shell.split(",")) {
-				if(nodeIndex!=null && !nodeIndex.equals("")) {
+				if(nodeIndex!=null && !nodeIndex.equals("") && analysisToCytoscapeDict.containsKey(Integer.parseInt(nodeIndex))) {
 					//Get Cynode
-					if(!analysisToCytoscapeDict.containsKey(Integer.parseInt(nodeIndex))) {
-						nodeTable.createColumn(nodeIndex, Integer.class, false);
-					} else {
-						node = analysisToCytoscapeDict.get(Integer.parseInt(nodeIndex));
-						nodeRow = network.getRow(node);
-						nodeRow.set("_wkshell", i);
-						resultShell.addNode(node);
-					}
-
+					node = analysisToCytoscapeDict.get(Integer.parseInt(nodeIndex));
+					nodeRow = network.getRow(node);
+					nodeRow.set("_wkshell", i);
+					resultShell.addNode(node);
 				}
 			}
 			i++;
-			result.addShell(resultShell);
+			this.result.addShell(resultShell);
+		}
+
+		//Determine which bucket each shell belongs to
+		int networkSize = this.result.getSize();
+		int nodesTraversed = 0;
+		int bucket = 0;
+
+		//double percentile;
+		for(Shell shell : this.result.getShells())  {
+			for(CyNode tempNode : shell.getNodes()) {
+				bucket = (((int)((nodesTraversed/(double) networkSize)*100))/5)*5;
+				//test if greater than >5 then 10>
+				nodeRow = network.getRow(tempNode);
+				nodeRow.set("_wks_percentile_bucket", bucket);
+				nodesTraversed++;
+			}
 		}
 	}
 
@@ -113,7 +127,7 @@ public class DecomposeTask implements ObservableTask {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object getResults(Class type) {
 		if (type == Result.class)
-			return result;
+			return this.result;
 
 		/*if (type == String.class) {
 			StringBuilder sb = new StringBuilder();
@@ -152,12 +166,12 @@ public class DecomposeTask implements ObservableTask {
 			return sb.toString();
 		}*/
 
-		/*if (type == JSONResult.class) {
+		if (type == JSONResult.class) {
 			Gson gson = new Gson();
 			JSONResult res = () -> { return gson.toJson(result); };
 
 			return res;
-		}*/
+		}
 
 		return null;
 	}

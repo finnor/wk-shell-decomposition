@@ -1,35 +1,30 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.view;
 
 import static javax.swing.GroupLayout.DEFAULT_SIZE;
+import static org.cytoscape.util.swing.LookAndFeelUtil.createTitledBorder;
 import static org.cytoscape.util.swing.LookAndFeelUtil.isAquaLAF;
 
-import java.awt.Component;
+import java.awt.*;
+import java.util.Hashtable;
 
-import javax.swing.GroupLayout;
+import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
-
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import org.cytoscape.application.CyUserLog;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
 import org.cytoscape.service.util.CyServiceRegistrar;
-import org.cytoscape.util.swing.BasicCollapsiblePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("serial")
 public class ResultsPanel extends JPanel implements CytoPanelComponent {
 
 
     // Graphical classes
-    private JScrollPane clusterBrowserScroll;
-    private BasicCollapsiblePanel explorePnl;
-    private JButton closeBtn;
+    private JPanel infoPanel;
 
     private Result result;
 
@@ -43,12 +38,12 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent {
      *
      */
     public ResultsPanel(
-            final CyServiceRegistrar registrar
+            final CyServiceRegistrar registrar,
+            Result result
     ) {
 
         this.registrar = registrar;
-
-        clusterBrowserScroll = new JScrollPane();
+        this.result = result;
 
         if (isAquaLAF())
             setOpaque(false);
@@ -58,13 +53,62 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent {
         layout.setAutoCreateContainerGaps(false);
         layout.setAutoCreateGaps(false);
 
+        infoPanel = getInfoPanel();
+
         layout.setHorizontalGroup(
                 layout.createParallelGroup(Alignment.CENTER, true)
-                        .addComponent(clusterBrowserScroll, DEFAULT_SIZE, DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(infoPanel, DEFAULT_SIZE, DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(layout.createSequentialGroup()
-                .addComponent(clusterBrowserScroll, DEFAULT_SIZE, DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(infoPanel, DEFAULT_SIZE, DEFAULT_SIZE, Short.MAX_VALUE)
         );
+
+        //Mean median degree of all shells
+        //of current shell
+        //slider to select shell
+        //also have text input that slider is synced with so that you could write a shell
+    }
+
+    private JPanel getInfoPanel() {
+        if (infoPanel == null) {
+            infoPanel = new JPanel();
+            infoPanel.setBorder(createTitledBorder(""));
+
+            if (isAquaLAF())
+                infoPanel.setOpaque(false);
+
+            logger.debug(this.result.toString());
+
+            JLabel kMaxLabel = new JLabel("k-Max: " + ((this.result!=null) ? this.result.getkMax() : ""), JLabel.CENTER);
+            kMaxLabel.setHorizontalAlignment(JLabel.RIGHT);
+            JLabel kMinLabel = new JLabel("k-Min: " + ((this.result!=null) ? this.result.getkMin() : ""), JLabel.CENTER);
+            kMaxLabel.setHorizontalAlignment(JLabel.RIGHT);
+
+            final GroupLayout layout = new GroupLayout(infoPanel);
+            infoPanel.setLayout(layout);
+            layout.setAutoCreateContainerGaps(true);
+            layout.setAutoCreateGaps(false);
+
+            layout.setHorizontalGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(Alignment.TRAILING, true)
+                            .addComponent(kMaxLabel)
+                            .addComponent(kMinLabel)
+                    ).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(Alignment.LEADING, true)
+                            //.addComponent(netScopeBtn)
+                    )
+            );
+            layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                            .addComponent(kMaxLabel)
+                            .addComponent(kMinLabel)
+                    ).addGroup(layout.createSequentialGroup()
+                            //.addComponent(netScopeBtn)
+                    )
+            );
+        }
+
+        return infoPanel;
     }
 
     @Override
@@ -84,24 +128,10 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent {
 
     @Override
     public String getTitle() {
-        return "Test";
+        return "wK-Shells";
     }
 
     public void setResult(Result result) {
         this.result = result;
     }
-
-    private BasicCollapsiblePanel getExplorePnl() {
-        if (explorePnl == null) {
-            explorePnl = new BasicCollapsiblePanel("Explore");
-            explorePnl.setCollapsed(false);
-            explorePnl.setVisible(false);
-
-            if (isAquaLAF())
-                explorePnl.setOpaque(false);
-        }
-
-        return explorePnl;
-    }
-
 }

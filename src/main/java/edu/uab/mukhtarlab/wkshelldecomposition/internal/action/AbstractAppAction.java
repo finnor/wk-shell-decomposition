@@ -29,7 +29,7 @@ public abstract class AbstractAppAction extends AbstractCyAction {
 	}
 
 	/**
-	 * @return Cytoscape's results panel
+	 * @return Results panel
 	 */
 	protected CytoPanel getResultsCytoPanel() {
 		return swingApplication.getCytoPanel(CytoPanelName.EAST);

@@ -35,41 +35,32 @@ public class DecomposeAction extends AbstractAppAction {
 	}
 
 	/**
-	 * This method is called when the user clicks Analyze.
+	 * Runs when the menu item is clicked
 	 *
-	 * @param event Click of the analyzeButton on the MainPanel.
+	 * @param event Click of the menu button for decomposition
 	 */
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		final CyNetwork network = applicationManager.getCurrentNetwork();
 
 		TaskObserver taskObserver = new TaskObserver() {
-
-			Result result = null;
-
 			@Override
 			public void taskFinished(ObservableTask task) {
-				//TODO HOW TO PASS RESULTS INTO THIS
-				//In instantiating or have a method to update
+				/*Result result = null;
 				if (task.getResultClasses().contains(Result.class))
 					result = task.getResults(Result.class);
 
-				if (getResultsPanel() == null) {
-					resultsPanel = new ResultsPanel(registrar);
+				resultsPanel = new ResultsPanel(registrar, result);
+				registrar.registerService(resultsPanel, CytoPanelComponent.class, new Properties());
 
-					registrar.registerService(resultsPanel, CytoPanelComponent.class, new Properties());
-				} else {
-					resultsPanel = getResultsPanel();
-				}
 
 				if (resultsPanel != null) {
-					resultsPanel.setResult(result);
 					CytoPanel cytoPanel = swingApplication.getCytoPanel(CytoPanelName.EAST);
 					int index = cytoPanel.indexOfComponent(resultsPanel);
 					cytoPanel.setSelectedIndex(index);
 					if (cytoPanel.getState() == CytoPanelState.HIDE)
 						cytoPanel.setState(CytoPanelState.DOCK);
-				}
+				}*/
 			}
 
 			@Override

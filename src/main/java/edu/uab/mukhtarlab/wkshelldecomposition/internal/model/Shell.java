@@ -5,7 +5,7 @@ import org.cytoscape.model.CyNode;
 import java.util.ArrayList;
 
 public class Shell {
-    private ArrayList<CyNode> nodes;
+    private ArrayList<CyNode> nodes = new ArrayList<CyNode>();
     private int k;
 
     public Shell(int k) {
@@ -22,5 +22,13 @@ public class Shell {
 
     public void addNode(CyNode node) {
         this.nodes.add(node);
+    }
+
+    public int getK() {
+        return k;
+    }
+
+    public int getSize() {
+        return nodes.size();
     }
 }
