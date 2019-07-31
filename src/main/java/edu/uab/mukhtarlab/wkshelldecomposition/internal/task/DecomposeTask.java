@@ -1,16 +1,15 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
-import com.google.gson.Gson;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.json.JSONResult;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.algorithm.Graph;
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.algorithm.WKShell;
 
 
 /**
@@ -37,10 +36,67 @@ public class DecomposeTask implements ObservableTask {
 	@Override
 	public void run(TaskMonitor tm) throws Exception {
 		//Convert network to a graph
+		Graph graph = new Graph();
+		TreeMap<CyNode, Integer> cytoscapeToAnalysisDict = new TreeMap<CyNode, Integer>(new Comparator<CyNode>()
+		{
+			public int compare(CyNode o1, CyNode o2)
+			{
+				return o1.getSUID().compareTo(o2.getSUID());
+			}
+		});
+		TreeMap<Integer, CyNode> analysisToCytoscapeDict = new TreeMap<Integer, CyNode>();
+
+		int i=1;
+		for(CyNode node :network.getNodeList()) {
+			if(!cytoscapeToAnalysisDict.containsKey(node)) {
+				cytoscapeToAnalysisDict.put(node, i);
+				analysisToCytoscapeDict.put(i, node);
+				i++;
+			}
+		}
+
+		CyNode source;
+		CyNode target;
+		int sourceInt;
+		int targetInt;
+		for(CyEdge edge : network.getEdgeList()) {
+			source = edge.getSource();
+			sourceInt = cytoscapeToAnalysisDict.get(source);
+			target = edge.getTarget();
+			targetInt = cytoscapeToAnalysisDict.get(target);
+			graph.addEdge(""+sourceInt,""+targetInt);
+		}
+
 
 		//Perform the algorithm on the graph
+		WKShell decomposer = new WKShell();
+		ArrayList<String> shells = decomposer.decompose(graph);
 
 		//Write results to network and result class
+		CyTable nodeTable = network.getDefaultNodeTable();
+		if(nodeTable.getColumn("_wkshell")==null) {
+			nodeTable.createColumn("_wkshell", Integer.class, false);
+		}
+		CyRow nodeRow;
+		CyNode node;
+		i=1;
+
+		for(String shell : shells) {
+			for (String nodeIndex : shell.split(",")) {
+				if(nodeIndex!=null && !nodeIndex.equals("")) {
+					//Get Cynode
+					if(!analysisToCytoscapeDict.containsKey(Integer.parseInt(nodeIndex))) {
+						nodeTable.createColumn(nodeIndex, Integer.class, false);
+					} else {
+						node = analysisToCytoscapeDict.get(Integer.parseInt(nodeIndex));
+						nodeRow = network.getRow(node);
+						nodeRow.set("_wkshell", i);
+					}
+					//add to result class
+				}
+			}
+			i++;
+		}
 		result = null;
 	}
 
