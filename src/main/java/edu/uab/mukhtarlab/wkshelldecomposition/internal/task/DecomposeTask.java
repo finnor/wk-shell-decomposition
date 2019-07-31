@@ -1,6 +1,7 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
+import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
@@ -21,7 +22,7 @@ public class DecomposeTask implements ObservableTask {
 	private boolean cancelled;
 	private CyNetwork network;
 
-	private Result result;
+	private Result result = new Result();
 
 
 	public DecomposeTask(
@@ -80,8 +81,10 @@ public class DecomposeTask implements ObservableTask {
 		CyRow nodeRow;
 		CyNode node;
 		i=1;
-
+		Shell resultShell;
+		Result result = new Result();
 		for(String shell : shells) {
+			resultShell = new Shell(i);
 			for (String nodeIndex : shell.split(",")) {
 				if(nodeIndex!=null && !nodeIndex.equals("")) {
 					//Get Cynode
@@ -91,13 +94,14 @@ public class DecomposeTask implements ObservableTask {
 						node = analysisToCytoscapeDict.get(Integer.parseInt(nodeIndex));
 						nodeRow = network.getRow(node);
 						nodeRow.set("_wkshell", i);
+						resultShell.addNode(node);
 					}
-					//add to result class
+
 				}
 			}
 			i++;
+			result.addShell(resultShell);
 		}
-		result = null;
 	}
 
 	@Override
@@ -108,10 +112,10 @@ public class DecomposeTask implements ObservableTask {
 	@Override
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object getResults(Class type) {
-		/*if (type == Result.class)
+		if (type == Result.class)
 			return result;
 
-		if (type == String.class) {
+		/*if (type == String.class) {
 			StringBuilder sb = new StringBuilder();
 
 			if (result == null) {
@@ -146,9 +150,9 @@ public class DecomposeTask implements ObservableTask {
 			}
 
 			return sb.toString();
-		}
+		}*/
 
-		if (type == JSONResult.class) {
+		/*if (type == JSONResult.class) {
 			Gson gson = new Gson();
 			JSONResult res = () -> { return gson.toJson(result); };
 

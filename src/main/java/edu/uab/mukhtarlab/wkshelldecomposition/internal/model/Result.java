@@ -7,23 +7,16 @@ import java.util.ArrayList;
 public class Result {
     private ArrayList<Shell> shells;
 
-    public Result(
-            ArrayList<Shell> shells
-    ) {
-        this.shells = shells;
-    }
-
     public ArrayList<Shell> getShells() {
         return shells;
     }
 
-    public void setShells(ArrayList<Shell> nodes) {
-        this.shells = nodes;
+    public void setShells(ArrayList<Shell> shells) {
+        this.shells = shells;
     }
 
-    public ArrayList<Shell> addShell(Shell shell) {
+    public void addShell(Shell shell) {
         shells.add(shell);
-        return shells;
     }
 
 
