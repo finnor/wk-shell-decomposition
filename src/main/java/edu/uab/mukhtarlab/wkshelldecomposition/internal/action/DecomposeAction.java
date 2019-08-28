@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.util.Properties;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.task.ConcentricLayoutTaskFactory;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.task.DecomposeTaskFactory;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.view.ResultsPanel;
 import org.cytoscape.application.swing.*;
@@ -76,9 +75,7 @@ public class DecomposeAction extends AbstractAppAction {
 	}
 
 	private void execute(CyNetwork network, CyNetworkView nView, TaskObserver taskObserver) {
-		DecomposeTaskFactory tf = new DecomposeTaskFactory(network);
+		DecomposeTaskFactory tf = new DecomposeTaskFactory(network, nView);
 		registrar.getService(DialogTaskManager.class).execute(tf.createTaskIterator(), taskObserver);
-		ConcentricLayoutTaskFactory layoutTF = new ConcentricLayoutTaskFactory(network, nView);
-		registrar.getService(DialogTaskManager.class).execute(layoutTF.createTaskIterator(), taskObserver);
 	}
 }

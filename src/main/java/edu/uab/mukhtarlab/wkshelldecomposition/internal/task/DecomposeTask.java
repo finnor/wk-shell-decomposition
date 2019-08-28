@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
+import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
@@ -23,14 +24,17 @@ public class DecomposeTask extends AbstractTask implements ObservableTask {
 
 	private boolean cancelled;
 	private CyNetwork network;
+	private CyNetworkView nView;
 
 	private Result result = new Result();
 
 
 	public DecomposeTask(
-			CyNetwork network
+			CyNetwork network,
+			CyNetworkView nView
 	) {
 		this.network = network;
+		this.nView = nView;
 	}
 
 	/**
@@ -134,7 +138,7 @@ public class DecomposeTask extends AbstractTask implements ObservableTask {
 			}
 		}
 
-		insertTasksAfterCurrentTask();
+		insertTasksAfterCurrentTask(new ConcentricLayoutTask(network, nView));
 	}
 
 	@Override

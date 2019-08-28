@@ -143,45 +143,16 @@ public class ConcentricLayoutTask implements ObservableTask {
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Object getResults(Class type) {
-        if (type == Result.class)
-            return this.result;
+        if (type == CyNetworkView.class)
+            return nView;
 
         if (type == String.class) {
-            StringBuilder sb = new StringBuilder();
-
-            if (result == null) {
-                sb.append("The decomposition failed"
-                );
-            } else {
-                List<Shell> shells = result.getShells();
-
-                sb.append(String.format(
-                        "<html><body>"
-                                + "<table style='font-family: monospace;'>"
-                                + "<tr style='font-weight: bold; border-width: 0px 0px 1px 0px; border-style: dotted;'>"
-                                + "<th style='text-align: left;'>K</th>"
-                                + "<th style='text-align: left;'>Nodes</th>"
-                                + "</tr>"
-                ));
-
-                for (Shell shell : shells)
-                    sb.append(String.format(
-                            "<tr>"
-                                    + "<td style='text-align: right;'>%d</td>"
-                                    + "<td style='text-align: right;'>%d</td></tr>",
-                            shell.getK(),
-                            shell.getSize()
-                    ));
-
-                sb.append("</table></body></html>");
-            }
-
-            return sb.toString();
+            return "Created view: " + nView;
         }
 
         if (type == JSONResult.class) {
             Gson gson = new Gson();
-            JSONResult res = () -> { return gson.toJson(result); };
+            JSONResult res = () -> { return gson.toJson(nView); };
 
             return res;
         }
@@ -191,6 +162,6 @@ public class ConcentricLayoutTask implements ObservableTask {
 
     @Override
     public List<Class<?>> getResultClasses() {
-        return Arrays.asList(Result.class, String.class, JSONResult.class);
+        return Arrays.asList(CyNetworkView.class, String.class, JSONResult.class);
     }
 }
