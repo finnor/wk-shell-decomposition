@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
+import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.json.JSONResult;
@@ -18,7 +19,7 @@ import edu.uab.mukhtarlab.wkshelldecomposition.internal.algorithm.WKShell;
  * Performs the weighted k-shell decomposition
  */
 
-public class DecomposeTask implements ObservableTask {
+public class DecomposeTask extends AbstractTask implements ObservableTask {
 
 	private boolean cancelled;
 	private CyNetwork network;
@@ -132,6 +133,8 @@ public class DecomposeTask implements ObservableTask {
 				nodesTraversed++;
 			}
 		}
+
+		insertTasksAfterCurrentTask();
 	}
 
 	@Override
