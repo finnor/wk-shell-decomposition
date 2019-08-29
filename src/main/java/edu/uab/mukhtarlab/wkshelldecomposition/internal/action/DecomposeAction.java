@@ -11,6 +11,8 @@ import org.cytoscape.model.*;
 import org.cytoscape.service.util.CyServiceRegistrar;
 
 import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.vizmap.VisualMappingFunctionFactory;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
 import org.cytoscape.work.FinishStatus;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskObserver;
@@ -45,6 +47,10 @@ public class DecomposeAction extends AbstractAppAction {
 		final CyNetwork network = applicationManager.getCurrentNetwork();
 		CyNetworkView nView = applicationManager.getCurrentNetworkView();
 
+		VisualStyleFactory visualStyleFactoryServiceRef = registrar.getService(VisualStyleFactory.class);
+		VisualMappingFunctionFactory vmfFactoryC = registrar.getService(VisualMappingFunctionFactory.class, "(mapping.type=continuous)");
+		VisualMappingFunctionFactory vmfFactoryP = registrar.getService(VisualMappingFunctionFactory.class, "(mapping.type=passthrough)");
+
 		TaskObserver taskObserver = new TaskObserver() {
 			@Override
 			public void taskFinished(ObservableTask task) {
@@ -71,11 +77,11 @@ public class DecomposeAction extends AbstractAppAction {
 			}
 		};
 
-		execute(network, nView, taskObserver);
+		execute(network, nView, visualStyleFactoryServiceRef, vmfFactoryC, vmfFactoryP, taskObserver);
 	}
 
-	private void execute(CyNetwork network, CyNetworkView nView, TaskObserver taskObserver) {
-		DecomposeTaskFactory tf = new DecomposeTaskFactory(network, nView);
+	private void execute(CyNetwork network, CyNetworkView nView, VisualStyleFactory visualStyleFactoryServiceRef, VisualMappingFunctionFactory vmfFactoryC, VisualMappingFunctionFactory vmfFactoryP, TaskObserver taskObserver) {
+		DecomposeTaskFactory tf = new DecomposeTaskFactory(network, nView, visualStyleFactoryServiceRef, vmfFactoryC, vmfFactoryP);
 		registrar.getService(DialogTaskManager.class).execute(tf.createTaskIterator(), taskObserver);
 	}
 }

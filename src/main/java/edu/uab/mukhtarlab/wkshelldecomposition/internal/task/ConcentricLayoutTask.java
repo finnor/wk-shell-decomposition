@@ -1,17 +1,24 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal.task;
 
 import com.google.gson.Gson;
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
-import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.View;
 import org.cytoscape.view.presentation.property.BasicVisualLexicon;
+import org.cytoscape.view.vizmap.VisualMappingFunctionFactory;
+import org.cytoscape.view.vizmap.VisualStyle;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
+import org.cytoscape.view.vizmap.mappings.BoundaryRangeValues;
+import org.cytoscape.view.vizmap.mappings.ContinuousMapping;
+import org.cytoscape.view.vizmap.mappings.DiscreteMapping;
+import org.cytoscape.view.vizmap.mappings.PassthroughMapping;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.json.JSONResult;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -21,18 +28,24 @@ import java.util.*;
 public class ConcentricLayoutTask implements ObservableTask {
 
     private boolean cancelled;
-    private CyNetwork network;
-    private CyNetworkView nView;
-
-    private Result result = new Result();
-
+    private final CyNetwork network;
+    private final CyNetworkView nView;
+    private final VisualStyleFactory visualStyleFactoryServiceRef;
+    private final VisualMappingFunctionFactory vmfFactoryC;
+    private final VisualMappingFunctionFactory vmfFactoryP;
 
     public ConcentricLayoutTask(
             CyNetwork network,
-            CyNetworkView nView
+            CyNetworkView nView,
+            VisualStyleFactory visualStyleFactoryServiceRef,
+            VisualMappingFunctionFactory vmfFactoryC,
+            VisualMappingFunctionFactory vmfFactoryP
     ) {
         this.network = network;
         this.nView = nView;
+        this.visualStyleFactoryServiceRef = visualStyleFactoryServiceRef;
+        this.vmfFactoryC = vmfFactoryC;
+        this.vmfFactoryP = vmfFactoryP;
     }
 
     /**
@@ -59,7 +72,9 @@ public class ConcentricLayoutTask implements ObservableTask {
 
         CyRow row;
         Integer percentileBucket;
+        Integer shell;
         double circlePerimeter;
+        int maxShell = 0;
 
         List<CyNode> nodes = network.getNodeList();
         //sort nodes by bucket, shell
@@ -93,19 +108,29 @@ public class ConcentricLayoutTask implements ObservableTask {
         for (final CyNode node : nodes) {
             View<CyNode> nodeView = nView.getNodeView(node);
             row = network.getRow(node);
+
+            //Get max shell for gradient mapping later
+            shell = row.get("_wkshell", Integer.class);
+            shell = (shell!=null) ? shell : 0;
+            if(shell>maxShell) {
+                maxShell = shell;
+            }
+
+            //For unimplemented layering
             percentileBucket = row.get("_wks_percentile_bucket", Integer.class);
             percentileBucket = (percentileBucket!=null) ? percentileBucket : 0;
-
             layerChange = false;//((layers-1-(percentileBucket/5))>currentLayer);
             if(layerChange) {
                 currentLayer = layers-1-(percentileBucket/5);
             }
 
+            //Does this node need to start a new circle for filling
             circleChange = (currentNode>=(nodesPerCircle));
             if(circleChange) {
                 currentCircle++;
             }
 
+            //If new circle for filling, update radius
             if(layerChange || circleChange){
                 currentNode = 0;
                 currentPositionRadius = (((double) currentCircle)*(nodeDiameter+circleGap)) + (((double) currentLayer)*layerGap);
@@ -128,11 +153,66 @@ public class ConcentricLayoutTask implements ObservableTask {
             currentNode++;
         }
 
-        //TODO
-        //reiterate through all nodes and color by heat scale on shell
+
+
+        VisualStyle vs = getVisualStyle(nodeDiameter, maxShell);
+        vs.apply(nView);
 
         nView.updateView();
         nView.fitContent();
+    }
+
+    private VisualStyle getVisualStyle(double nodeDiameter, int maxShell) {
+        VisualStyle vs = visualStyleFactoryServiceRef.createVisualStyle("Shell gradient");
+        vs.setDefaultValue(BasicVisualLexicon.NODE_BORDER_PAINT, Color.BLACK); //Default handles null shell
+        //Mapping for border paint handled below
+        vs.setDefaultValue(BasicVisualLexicon.NODE_BORDER_WIDTH, nodeDiameter/10.0);
+        vs.setDefaultValue(BasicVisualLexicon.NODE_FILL_COLOR, Color.WHITE); //Default handles null shell
+        //Mapping for fill color handled below
+        vs.setDefaultValue(BasicVisualLexicon.NODE_HEIGHT, nodeDiameter);
+        //Mapping for label handled below
+        vs.setDefaultValue(BasicVisualLexicon.NODE_LABEL_COLOR, Color.BLACK);
+        vs.setDefaultValue(BasicVisualLexicon.NODE_LABEL_FONT_SIZE, (int)(nodeDiameter*0.3));
+        vs.setDefaultValue(BasicVisualLexicon.NODE_TRANSPARENCY, 255);
+        vs.setDefaultValue(BasicVisualLexicon.NODE_WIDTH, nodeDiameter);
+
+        vs.setDefaultValue(BasicVisualLexicon.NODE_SIZE, nodeDiameter);
+        vs.setDefaultValue(BasicVisualLexicon.NODE_OPACITY, 200);
+
+
+        //Fill Color
+        ContinuousMapping fillMapping = (ContinuousMapping)
+                vmfFactoryC.createVisualMappingFunction("_wkshell", Integer.class, BasicVisualLexicon.NODE_FILL_COLOR);
+        // Define the points
+        Double val1 = 1d;
+        BoundaryRangeValues<Paint> brv1 = new BoundaryRangeValues<Paint>(Color.BLUE, Color.BLUE, Color.BLUE);
+        Double val2 = (double) maxShell;
+        BoundaryRangeValues<Paint> brv2 = new BoundaryRangeValues<Paint>(Color.RED, Color.RED, Color.RED);
+        // Set the points
+        fillMapping.addPoint(val1, brv1);
+        fillMapping.addPoint(val2, brv2);
+        // add the mapping to visual style
+        vs.addVisualMappingFunction(fillMapping);
+
+        //Border paint
+        ContinuousMapping borderMapping = (ContinuousMapping)
+                vmfFactoryC.createVisualMappingFunction("_wkshell", Integer.class, BasicVisualLexicon.NODE_BORDER_PAINT);
+        //Reuse points from fill color
+        // Set the points
+        borderMapping.addPoint(val1, brv1);
+        borderMapping.addPoint(val2, brv2);
+        //add the mapping to visual style
+        vs.addVisualMappingFunction(borderMapping);
+
+        //Label
+        PassthroughMapping labelMapping = (PassthroughMapping)
+                vmfFactoryP.createVisualMappingFunction("name", String.class, BasicVisualLexicon.NODE_LABEL);
+
+
+
+        vs.addVisualMappingFunction(labelMapping);
+
+        return vs;
     }
 
     @Override
