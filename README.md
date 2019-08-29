@@ -1,3 +1,8 @@
 # wk-shell-decomposition
 
-A Cytoscape app to perform weighted k-shell decomposition
+wk-shell-decomposition is a Cytoscape 3 app that performs a k-shell decomposition on a network using a novel weighted algorithm. k-shell decomposition is a method that ranks the most important nodes in a network and partitions them into shells based on that rank. This novel algorithm assigns a weight based on the degree of a node and the adjacent nodes. This app will generate a column _wkshell on the network's node table that stores the rank and partitions the network into ordinal k-shells. This app can be run by accessing it under the apps menu or by calling the command: 
+
+`wkshell decompose`
+
+## Download
+You can download this app through the app store by accessing the store through the Cytoscape client and searching for "**wk-shell-decomposition**". You can also download it at the app page: http://apps.cytoscape.org/apps/wkshelldecomposition
