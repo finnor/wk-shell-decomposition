@@ -1,14 +1,8 @@
 package edu.uab.mukhtarlab.wkshelldecomposition.internal;
 
-import static org.cytoscape.work.ServiceProperties.COMMAND;
-import static org.cytoscape.work.ServiceProperties.COMMAND_NAMESPACE;
-import static org.cytoscape.work.ServiceProperties.COMMAND_DESCRIPTION;
-import static org.cytoscape.work.ServiceProperties.COMMAND_LONG_DESCRIPTION;
-
 import java.util.Properties;
 
 import org.cytoscape.application.swing.CyAction;
-import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.service.util.AbstractCyActivator;
 import org.cytoscape.service.util.CyServiceRegistrar;
 import org.cytoscape.work.TaskFactory;
@@ -16,6 +10,8 @@ import org.osgi.framework.BundleContext;
 
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.action.DecomposeAction;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.task.DecomposeCommandTaskFactory;
+
+import static org.cytoscape.work.ServiceProperties.*;
 
 /**
  * CyActivator for app
@@ -29,13 +25,12 @@ public class CyActivator extends AbstractCyActivator {
 	@SuppressWarnings("unchecked")
 	public void start(BundleContext bc) {
 		registrar = getService(bc, CyServiceRegistrar.class);
-		
-		CySwingApplication swingApp = getService(bc, CySwingApplication.class);
-		
+
 		DecomposeAction decomposeAction = new DecomposeAction("wk-shell decomposition", registrar);
 
 		registerService(bc, decomposeAction, CyAction.class);
-		
+
+
 		// Commands
 		{
 			DecomposeCommandTaskFactory factory = new DecomposeCommandTaskFactory(registrar);

@@ -4,6 +4,10 @@ import com.google.gson.Gson;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Result;
 import edu.uab.mukhtarlab.wkshelldecomposition.internal.model.Shell;
 import org.cytoscape.model.*;
+import org.cytoscape.view.model.CyNetworkView;
+import org.cytoscape.view.vizmap.VisualMappingFunctionFactory;
+import org.cytoscape.view.vizmap.VisualStyleFactory;
+import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.ObservableTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.json.JSONResult;
@@ -18,18 +22,29 @@ import edu.uab.mukhtarlab.wkshelldecomposition.internal.algorithm.WKShell;
  * Performs the weighted k-shell decomposition
  */
 
-public class DecomposeTask implements ObservableTask {
+public class DecomposeTask extends AbstractTask implements ObservableTask {
 
 	private boolean cancelled;
-	private CyNetwork network;
+	private final CyNetwork network;
+	private final CyNetworkView nView;
+	private final VisualStyleFactory visualStyleFactoryServiceRef;
+	private final VisualMappingFunctionFactory vmfFactoryC;
+	private final VisualMappingFunctionFactory vmfFactoryP;
 
 	private Result result = new Result();
 
-
 	public DecomposeTask(
-			CyNetwork network
+			CyNetwork network,
+			CyNetworkView nView,
+			VisualStyleFactory visualStyleFactoryServiceRef,
+			VisualMappingFunctionFactory vmfFactoryC,
+			VisualMappingFunctionFactory vmfFactoryP
 	) {
 		this.network = network;
+		this.nView = nView;
+		this.visualStyleFactoryServiceRef = visualStyleFactoryServiceRef;
+		this.vmfFactoryC = vmfFactoryC;
+		this.vmfFactoryP = vmfFactoryP;
 	}
 
 	/**
@@ -132,6 +147,8 @@ public class DecomposeTask implements ObservableTask {
 				nodesTraversed++;
 			}
 		}
+
+		insertTasksAfterCurrentTask(new ConcentricLayoutTask(network, nView, visualStyleFactoryServiceRef, vmfFactoryC, vmfFactoryP));
 	}
 
 	@Override
